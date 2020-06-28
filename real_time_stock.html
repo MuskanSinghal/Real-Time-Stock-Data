@@ -30,7 +30,6 @@ function Create(symbol,values)
   };
 
   var ctx = document.getElementById('barChart').getContext("2d");
-  //window.alert(ctx)
   Chart.defaults.scale.ticks.beginAtZero = true;
   chart_container=document.getElementById('chart_container');
   chart_container.style.height = '250px';
@@ -113,8 +112,8 @@ function Create(symbol,values)
       {
           yAxes:
           [{
-              barThickness: 20,  // number (pixels) or 'flex'
-              maxBarThickness: 20 // number (pixels)
+              barThickness: 20,
+              maxBarThickness: 20
           }]
       },
 });
@@ -157,8 +156,6 @@ function addData(symbol,values)
 
     if (horizontalBarChartData.datasets.length > 0)
     {
-        //check(symbol)
-        //var month = MONTHS[horizontalBarChartData.labels.length % MONTHS.length];
         horizontalBarChartData.labels.push(symbol);
 
         for (var index = 0; index < horizontalBarChartData.datasets.length; ++index)
@@ -205,7 +202,6 @@ function UserAction()
             }
         };
         xhr.open("GET","https://cors-anywhere.herokuapp.com/https://api.tiingo.com/iex/?tickers="+symbol.value+",spy&token=a84636bdbb8ee842910ff920283ca277b7bf1287",true);
-        //xhr.open("GET", "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="+symbol.value+"&apikey=GI108BRWWMBFSX8N", true);
         xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
         xhr.setRequestHeader("Content-type", "application/json");
         xhr.send();
@@ -214,7 +210,6 @@ function UserAction()
 
 function updateStockList()
 {
-    //window.alert(document.getElementById("symbol").value);
 
     var stockValue = document.getElementById("symbol").value;
     if(stockValue != '')
@@ -246,7 +241,6 @@ function getPrice(symbol,i){
            }
       };
       xhr.open("GET","https://cors-anywhere.herokuapp.com/https://api.tiingo.com/iex/?tickers=" + symbol + ",spy&token=a84636bdbb8ee842910ff920283ca277b7bf1287",true);
-      //xhr.open("GET", "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="+symbol+"&apikey=GI108BRWWMBFSX8N", true);
       xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
       xhr.setRequestHeader("Content-type", "application/json");
 
@@ -284,7 +278,7 @@ function valid_date()
       // to get EST time from local time
       localTime = local_date.getTime();
       localOffset = local_date.getTimezoneOffset() * 60000;
-      //window.alert(localOffset);
+
       utc = localTime + localOffset;
       offset = -4.0;
       new_york = utc + (3600000*offset);
@@ -305,46 +299,29 @@ function valid_date()
       {
           holiday = true;
           holiday_reason = "Weekend"
-          //window.alert("Weekend")
       }
       else
       {
-          //window.alert("Weekday..")
           holiday_reason = null;
       }
 
 
-
-
-      //window.alert(holidays.hasOwnProperty(0 + ', ' + 20));
-      //window.alert(holidays[0 + ', ' + 20]);
       var time = stock_date_est.toLocaleString()
       console.log("EST time is " + time);
 
-      //extracting time as 9:45:00 PM
-      //window.alert(stock_date_est.toLocaleTimeString('en-US'));
 
-      // gets time_now in EST
       var time_now = (stock_date_est.getHours() * 60) + stock_date_est.getMinutes();
-      //window.alert("hours = " + stock_date_est.getHours());
-      //window.alert("minutes = " + stock_date_est.getMinutes());
-      //window.alert("current minutes = " + time_now);
-
 
       //to check est time is between 9:30 am and 4:00 pm
       if(start_time <= time_now && time_now <= end_time)
       {
-          //window.alert("In time range");
           time_up = false;
       }
       else
       {
-          //window.alert("Outside Time Range");
           time_up = true;
       }
       result = [holiday, holiday_reason, time_up];
-      //return result
-      //window.alert(result);
       return(result);
 }
 
@@ -354,21 +331,17 @@ function check_interval_seconds()
     result = valid_date();
     console.log(result)
 
-    //window.alert("calling date...");
-    //window.alert("RESULT == " + result);
     var holiday = result[0];
     var holiday_reason = result[1];
     var time_up = result[2];
-    //var seconds = 0;
     if((holiday ==false)&&(time_up==false))
     {
       timer = setInterval(updatePrice, 5000);
       document.getElementById("stock").innerHTML = "Stock Market is currently open.";
     }
-    else{
+    else
+    {
       console.log("Market is closed currently. Please come back later.")
-      //var p = document.getElementById("stock");
-      //p.innerHTML = "Market is closed currently. Please come back later."
       document.getElementById("stock").innerHTML = "Stock Market is currently closed.";
 
       clearTimeout(timer)
