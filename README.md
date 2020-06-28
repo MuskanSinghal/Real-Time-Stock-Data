@@ -1,4 +1,4 @@
-Real-time Stock Price Chart
+# Real-time Stock Price Chart
 
 Built a Single page client-side app (SPA) using HTML and Javascript:
 
