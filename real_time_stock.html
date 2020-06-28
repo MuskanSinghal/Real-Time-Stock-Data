@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script>
+entry = 0
+barChart = null
+horizontalBarChartData=null
+myHorizontalBar=null
+window.onload = function()
+{
+    timer=null
+    holiday_timer=setInterval(check_interval_seconds, 30000);
+};
+
+function Create(symbol,values)
+{
+    var json_data = JSON.parse(values);
+    value = json_data[0]["last"]
+    horizontalBarChartData =
+    {
+        labels: [symbol],
+        datasets: [{
+            label: 'Stock Price',
+            backgroundColor: '#008B8B',
+            borderColor: '#008B8B',
+            borderWidth: 1,
+            data: [value]
+        }]
+  };
+
+  var ctx = document.getElementById('barChart').getContext("2d");
+  //window.alert(ctx)
+  Chart.defaults.scale.ticks.beginAtZero = true;
+  chart_container=document.getElementById('chart_container');
+  chart_container.style.height = '250px';
+  chart_container.style.width = '600px';
+
+  myHorizontalBar = new Chart(ctx,
+  {
+      type: 'horizontalBar',
+      data: horizontalBarChartData,
+      options:
+      {
+          responsive: true,
+          elements:
+          {
+              rectangle:
+              {
+                  borderWidth: 2,
+              }
+          },
+          responsive: true,
+          legend:
+          {
+              position: 'right',
+          },
+          title:
+          {
+              display: true,
+              text: 'Stock Market Data'
+          },
+          scales:
+          {
+              yAxes:
+              [{
+                  scaleLabel:
+                  {
+                      display: true,
+                      labelString: 'COMPANIES --->',
+                      lineHeight: 3,
+                      fontFamily: 'Arial',
+                      fontSize:12,
+                      fontStyle:'bold',
+                  }
+              }],
+              xAxes:
+              [{
+                  scaleLabel:
+                  {
+                      display: true,
+                      labelString: 'PRICES --->',
+                      lineHeight: 3,
+                      fontFamily: 'Arial',
+                      fontSize:12,
+                      fontStyle:'bold'
+                  }
+             }],
+          },
+          animation:
+          {
+             duration: 1,
+             onComplete: function()
+             {
+                var chartInstance = this.chart
+                ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                horizontalBarChartData.datasets.forEach(function(dataset, i)
+                {
+                    var meta = chartInstance.controller.getDatasetMeta(i);
+                    meta.data.forEach(function(bar, index)
+                    {
+                        var data = dataset.data[index];
+                        ctx.fillText(data, bar._model.x + 25, bar._model.y);
+                    });
+                });
+            }
+         },
+      },
+      scales:
+      {
+          yAxes:
+          [{
+              barThickness: 20,  // number (pixels) or 'flex'
+              maxBarThickness: 20 // number (pixels)
+          }]
+      },
+});
+}
+
+function updatePrice(){
+
+  stocks_currently_on_chart =  horizontalBarChartData.labels;
+  for(i=0 ; i<horizontalBarChartData.labels.length;i++){
+    getPrice(horizontalBarChartData.labels[i],i)
+
+  }
+}
+function check(symbol)
+{
+
+  length = horizontalBarChartData.datasets[0].data.length
+  if (length > 0)
+  {
+    for (var index = 0; index < horizontalBarChartData.labels.length; ++index)
+    {
+
+          if (symbol == horizontalBarChartData.labels[index])
+          {
+              return true;
+          }
+    }
+    return false;
+
+  }
+}
+
+function addData(symbol,values)
+{
+
+    clearTimeout(timer)
+    var json_data = JSON.parse(values);
+    value = json_data[0]["last"]
+    var seconds = 5000;
+
+    if (horizontalBarChartData.datasets.length > 0)
+    {
+        //check(symbol)
+        //var month = MONTHS[horizontalBarChartData.labels.length % MONTHS.length];
+        horizontalBarChartData.labels.push(symbol);
+
+        for (var index = 0; index < horizontalBarChartData.datasets.length; ++index)
+        {
+            horizontalBarChartData.datasets[index].data.push(value);
+        }
+
+        myHorizontalBar.update();
+      }
+    result = valid_date();
+    if((result[0]==false)&&(result[2]==false)){
+      timer = setInterval(updatePrice, 5000);
+    }
+}
+
+// inserting the new dataset after 3 seconds
+
+function UserAction()
+{
+    //updateStockList()
+    symbol = document.getElementById('symbol')
+
+    if(symbol.value != '')
+    {
+
+        xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function()
+        {
+            if (this.readyState == 4 && this.status == 200)
+            {
+                if(entry == 0)
+                {
+                    Create(symbol.value,this.responseText)
+                    entry = entry + 1
+                }
+                else
+                {
+                    isAlreadyThere = check(symbol.value)
+                    if(isAlreadyThere == false)
+                    {
+                        addData(symbol.value,this.responseText)
+                    }
+                }
+            }
+        };
+        xhr.open("GET","https://cors-anywhere.herokuapp.com/https://api.tiingo.com/iex/?tickers="+symbol.value+",spy&token=a84636bdbb8ee842910ff920283ca277b7bf1287",true);
+        //xhr.open("GET", "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="+symbol.value+"&apikey=GI108BRWWMBFSX8N", true);
+        xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+        xhr.setRequestHeader("Content-type", "application/json");
+        xhr.send();
+    }
+}
+
+function updateStockList()
+{
+    //window.alert(document.getElementById("symbol").value);
+
+    var stockValue = document.getElementById("symbol").value;
+    if(stockValue != '')
+    {
+        var li = document.createElement("li");
+        var ele = document.createElement("a");
+        ele.innerHTML = stockValue;
+        li.appendChild(ele);
+        document.getElementById("listOfStock").appendChild(li);
+        document.getElementById("listOfStock").style.width = "100px";
+        document.getElementById("listOfStock").style.border = "thick solid  black";
+        document.getElementById("listOfStock").style.padding = "20px";
+    }
+
+}
+
+function getPrice(symbol,i){
+      console.log(symbol+":"+i)
+      xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function()
+      {
+           if (this.readyState == 4 && this.status == 200)
+           {
+             var json_data = JSON.parse(this.responseText);
+             value = json_data[0]["last"];
+             val = parseFloat(value)
+             horizontalBarChartData.datasets[0].data[i]=val
+             myHorizontalBar.update();
+           }
+      };
+      xhr.open("GET","https://cors-anywhere.herokuapp.com/https://api.tiingo.com/iex/?tickers=" + symbol + ",spy&token=a84636bdbb8ee842910ff920283ca277b7bf1287",true);
+      //xhr.open("GET", "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="+symbol+"&apikey=GI108BRWWMBFSX8N", true);
+      xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+      xhr.setRequestHeader("Content-type", "application/json");
+
+      xhr.send();
+}
+
+function valid_date()
+{
+      var holiday = false;
+      var holiday_reason = '';
+      var time_up = false;
+
+      //stock market is active from 9:30 am to 4:00 pm
+      // converting them into minutes from 24 hour time format
+      var start_time = (9 * 60) + 30;
+      var end_time = 16 * 60;
+
+      // keys are formatted as month, date
+      var holidays = {
+                          "0, 1"   : "New Years Day",
+                          "0, 20"  : "Martin Luther King, Jr. Day",
+                          "1, 17"  : "Washington's Birthday",
+                          "3, 10"  : "Good Friday",
+                          "4, 25"  : "Memorial Day",
+                          "6, 4"   : "Independence Day",
+                          "8, 7"   : "Labor Day",
+                          "10, 26" : "Thanksgiving Day",
+                          "11, 25" : "Christmas Day"
+                      };
+
+      local_date = new Date();
+
+
+
+      // to get EST time from local time
+      localTime = local_date.getTime();
+      localOffset = local_date.getTimezoneOffset() * 60000;
+      //window.alert(localOffset);
+      utc = localTime + localOffset;
+      offset = -4.0;
+      new_york = utc + (3600000*offset);
+      stock_date_est = new Date(new_york);
+
+      // get EST's month and date to know if it is a holiday
+      stock_month = stock_date_est.getMonth();
+      stock_date = stock_date_est.getDate();
+
+      if(holidays.hasOwnProperty(stock_month + ', ' + stock_date))
+      {
+          holiday = true;
+          holiday_reason = holidays[stock_month + ', ' + stock_date];
+      }
+
+      //weekends
+      else if (stock_date_est.getDay() == 6 || stock_date_est.getDay() == 0)
+      {
+          holiday = true;
+          holiday_reason = "Weekend"
+          //window.alert("Weekend")
+      }
+      else
+      {
+          //window.alert("Weekday..")
+          holiday_reason = null;
+      }
+
+
+
+
+      //window.alert(holidays.hasOwnProperty(0 + ', ' + 20));
+      //window.alert(holidays[0 + ', ' + 20]);
+      var time = stock_date_est.toLocaleString()
+      console.log("EST time is " + time);
+
+      //extracting time as 9:45:00 PM
+      //window.alert(stock_date_est.toLocaleTimeString('en-US'));
+
+      // gets time_now in EST
+      var time_now = (stock_date_est.getHours() * 60) + stock_date_est.getMinutes();
+      //window.alert("hours = " + stock_date_est.getHours());
+      //window.alert("minutes = " + stock_date_est.getMinutes());
+      //window.alert("current minutes = " + time_now);
+
+
+      //to check est time is between 9:30 am and 4:00 pm
+      if(start_time <= time_now && time_now <= end_time)
+      {
+          //window.alert("In time range");
+          time_up = false;
+      }
+      else
+      {
+          //window.alert("Outside Time Range");
+          time_up = true;
+      }
+      result = [holiday, holiday_reason, time_up];
+      //return result
+      //window.alert(result);
+      return(result);
+}
+
+function check_interval_seconds()
+{
+
+    result = valid_date();
+    console.log(result)
+
+    //window.alert("calling date...");
+    //window.alert("RESULT == " + result);
+    var holiday = result[0];
+    var holiday_reason = result[1];
+    var time_up = result[2];
+    //var seconds = 0;
+    if((holiday ==false)&&(time_up==false))
+    {
+      timer = setInterval(updatePrice, 5000);
+      document.getElementById("stock").innerHTML = "Stock Market is currently open.";
+    }
+    else{
+      console.log("Market is closed currently. Please come back later.")
+      //var p = document.getElementById("stock");
+      //p.innerHTML = "Market is closed currently. Please come back later."
+      document.getElementById("stock").innerHTML = "Stock Market is currently closed.";
+
+      clearTimeout(timer)
+    }
+}
+
+
+
+
+</script>
+
+<body>
+<div style="padding-left:120px;">
+<h1> <u> Real Time Stock Data </u> </h1>
+
+<p id="demo"> <b> <h3>Enter Stock Symbol for Company: </h3> </b> </p>
+<div id = "stock"> </div>
+<br> <br>
+<input type='text' placeholder = 'Enter Stock Symbol'id='symbol'/>
+<br> <br>
+<input type="button" style="text-align:center"onclick="UserAction(); updateStockList()" value='Get Price'/>
+<!--<input type="button" onclick="resetEverything()" value='Reset'/> -->
+<div id = "listOfStock" style = "color:black; float:right; position:relative; bottom: -120px; right: 550px; background-color:DarkTurquoise; width: 100% border:thick"> </div>
+</div>
+<br> <br> <br>
+<div id='chart_container' style="text-align:center">
+<canvas id="barChart" width="400" height="400"></canvas>
+</div>
+</body>
+</html>
